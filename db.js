@@ -15,11 +15,24 @@ const initDB = async () => {
     subject TEXT NOT NULL,
     body TEXT NOT NULL,
     timestamp TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
-    token TEXT NOT NULL
+    smtp_token TEXT NOT NULL
     )
     `);
 
-    return db;
+    // Create the new config table if it doesn't exist
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      smtp_token TEXT,  /* Remove NOT NULL constraint */
+      pass_key TEXT NOT NULL,
+      smtp_user TEXT,
+      smtp_pass TEXT,
+      smtp_host TEXT,
+      smtp_from TEXT
+    )
+  `);
+
+  return db;
 };
 
 export default initDB;
