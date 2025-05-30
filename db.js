@@ -1,35 +1,52 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import pgPromise from 'pg-promise';
+import fs from 'fs';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const pgp = pgPromise();
+
+const db = pgp({
+  host: process.env.DB_AIVEN_HOST,
+  port: process.env.DB_AIVEN_PORT,
+  database: process.env.DB_AIVEN_DB,
+  user: process.env.DB_AIVEN_USER,
+  password: process.env.DB_AIVEN_PASS,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: fs.readFileSync('./cert/ca.pem').toString(),
+  },
+});
 
 const initDB = async () => {
-  const db = await open({
-    filename: './messages.db',
-    driver: sqlite3.Database,
-  });
-
-  // Create table none existing
-  await db.exec(`
+  await db.none(`
     CREATE TABLE IF NOT EXISTS message_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL,
-    subject TEXT NOT NULL,
-    body TEXT NOT NULL,
-    timestamp TEXT NOT NULL DEFAULT (DATETIME('now','localtime')),
-    smtp_token TEXT NOT NULL
-    )
-    `);
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      body TEXT NOT NULL,
+      timestamp TIMESTAMPTZ DEFAULT NOW(),
+      smtp_token TEXT NOT NULL
+    );
+  `);
 
-    // Create the new config table if it doesn't exist
-  await db.exec(`
+  await db.none(`
     CREATE TABLE IF NOT EXISTS config (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      smtp_token TEXT,  /* Remove NOT NULL constraint */
+      id SERIAL PRIMARY KEY,
+      smtp_token TEXT,
       pass_key TEXT NOT NULL,
       smtp_user TEXT,
       smtp_pass TEXT,
       smtp_host TEXT,
       smtp_from TEXT
-    )
+    );
+  `);
+
+  await db.none(`
+    CREATE TABLE IF NOT EXISTS passkeys (
+      id SERIAL PRIMARY KEY,
+      pass_key TEXT UNIQUE NOT NULL
+    );
   `);
 
   return db;

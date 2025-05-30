@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 initDB().then(async (db) => { // await DB initialization
-  app.use('/', messageRoutes(db));
+  app.use('/message', messageRoutes(db));
   app.use('/config', configRoutes(db));
 
   app.listen(PORT, () => {

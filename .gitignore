@@ -1,2 +1,8 @@
 # Ignore node_modules
 node_modules/
+
+# ignore unnecessary files
+index.js
+
+# Ignore environment files
+.env
